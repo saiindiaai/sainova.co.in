@@ -14,6 +14,7 @@
       color: #f0f0f0;
       overflow: hidden;
     }
+
     /* Splash screen */
     #splash {
       position: fixed;
@@ -45,13 +46,15 @@
       from { opacity: 0; }
       to { opacity: 1; }
     }
-    /* Iframe container */
+
+    /* Iframe */
     iframe {
       width: 100%;
       height: 100%;
       border: none;
       display: none;
     }
+
     /* Error message */
     #error {
       display: none;
@@ -86,40 +89,47 @@
   <iframe id="mainFrame"></iframe>
 
   <script>
-    // Base64 encoded URL: https://sai-nova-technologies.base44.app/
+    // Base64 encoded URL (hidden)
     const encoded = "aHR0cHM6Ly9zYWktbm92YS10ZWNobm9sb2dpZXMuYmFzZTQ0LmFwcC8=";
+    const decodeBase64 = s => decodeURIComponent(atob(s).split('').map(c => 
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(''));
 
-    function decodeBase64(str) {
-      try {
-        return decodeURIComponent(Array.prototype.map.call(atob(str), c =>
-          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-        ).join(''));
-      } catch (e) { return atob(str); }
-    }
-
-    const decodedUrl = decodeBase64(encoded);
     const iframe = document.getElementById('mainFrame');
     const splash = document.getElementById('splash');
     const errorScreen = document.getElementById('error');
+    const decodedUrl = decodeBase64(encoded);
 
-    // Load iframe
+    let loaded = false;
     iframe.src = decodedUrl;
 
-    // When iframe loads successfully
-    iframe.onload = () => {
+    // Detect iframe load success
+    iframe.addEventListener('load', () => {
+      loaded = true;
       splash.style.animation = 'fadeOut 0.8s ease forwards';
       setTimeout(() => {
         splash.style.display = 'none';
         iframe.style.display = 'block';
       }, 800);
-    };
+    });
 
-    // Timeout for load failure (10s)
+    // Safety timeout (longer & smarter)
     setTimeout(() => {
-      if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') return;
-      splash.style.display = 'none';
-      errorScreen.style.display = 'flex';
-    }, 10000);
+      if (!loaded) {
+        try {
+          // Some browsers still load silently; check if we can access document
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          if (doc && doc.readyState === 'complete') {
+            loaded = true;
+          }
+        } catch (e) { /* cross-origin, ignore */ }
+      }
+
+      if (!loaded) {
+        splash.style.display = 'none';
+        errorScreen.style.display = 'flex';
+      }
+    }, 15000); // 15 seconds to allow slow loads
   </script>
 </body>
 </html>
