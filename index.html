@@ -54,36 +54,12 @@
       border: none;
       display: none;
     }
-
-    /* Error message */
-    #error {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: #0b0b0b;
-      color: #ff5c5c;
-      font-size: 1.1rem;
-      text-align: center;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-    }
-    #error small {
-      color: #aaa;
-      margin-top: 8px;
-      font-size: 0.9rem;
-    }
   </style>
 </head>
 <body>
   <div id="splash">
     <h1>SaiNova Technologies</h1>
     <p>This website is for temporary use!<br>New website coming soon.</p>
-  </div>
-
-  <div id="error">
-    <div>⚠️ Failed to Load the Web</div>
-    <small>Check your internet connection or email to <b>sai.india.ai@zohomail.in</b></small>
   </div>
 
   <iframe id="mainFrame"></iframe>
@@ -97,39 +73,18 @@
 
     const iframe = document.getElementById('mainFrame');
     const splash = document.getElementById('splash');
-    const errorScreen = document.getElementById('error');
     const decodedUrl = decodeBase64(encoded);
 
-    let loaded = false;
     iframe.src = decodedUrl;
 
-    // Detect iframe load success
-    iframe.addEventListener('load', () => {
-      loaded = true;
+    // When iframe loads, hide splash
+    iframe.onload = () => {
       splash.style.animation = 'fadeOut 0.8s ease forwards';
       setTimeout(() => {
         splash.style.display = 'none';
         iframe.style.display = 'block';
       }, 800);
-    });
-
-    // Safety timeout (longer & smarter)
-    setTimeout(() => {
-      if (!loaded) {
-        try {
-          // Some browsers still load silently; check if we can access document
-          const doc = iframe.contentDocument || iframe.contentWindow.document;
-          if (doc && doc.readyState === 'complete') {
-            loaded = true;
-          }
-        } catch (e) { /* cross-origin, ignore */ }
-      }
-
-      if (!loaded) {
-        splash.style.display = 'none';
-        errorScreen.style.display = 'flex';
-      }
-    }, 15000); // 15 seconds to allow slow loads
+    };
   </script>
 </body>
 </html>
